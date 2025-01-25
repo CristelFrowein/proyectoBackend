@@ -1,19 +1,16 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 
 const app = express();
 
-
 const PORT = 8080;
 
 
-app.use(bodyParser.json());
+app.use(express.json());  
 
 const productsFile = path.join(__dirname, 'products.json');
 const cartsFile = path.join(__dirname, 'cart.json');
-
 
 function readProducts() {
     if (!fs.existsSync(productsFile)) {
@@ -23,11 +20,9 @@ function readProducts() {
     return JSON.parse(data);
 }
 
-
 function writeProducts(products) {
     fs.writeFileSync(productsFile, JSON.stringify(products, null, 2));
 }
-
 
 function readCarts() {
     if (!fs.existsSync(cartsFile)) {
@@ -37,12 +32,9 @@ function readCarts() {
     return JSON.parse(data);
 }
 
-
 function writeCarts(carts) {
     fs.writeFileSync(cartsFile, JSON.stringify(carts, null, 2));
 }
-
-
 
 app.get('/api/products', (req, res) => {
     const products = readProducts();
@@ -63,7 +55,6 @@ app.get('/api/products/:pid', (req, res) => {
 app.post('/api/products', (req, res) => {
     const { title, description, code, price, status = true, stock, category, thumbnails = [] } = req.body;
     const products = readProducts();
-
    
     const id = Date.now().toString();
 
@@ -85,7 +76,6 @@ app.put('/api/products/:pid', (req, res) => {
         return res.status(404).json({ error: 'Product not found' });
     }
 
-   
     if (title) product.title = title;
     if (description) product.description = description;
     if (code) product.code = code;
@@ -114,8 +104,6 @@ app.delete('/api/products/:pid', (req, res) => {
 
     res.status(204).end();
 });
-
-
 
 app.post('/api/carts', (req, res) => {
     const carts = readCarts();
@@ -156,10 +144,8 @@ app.post('/api/carts/:cid/product/:pid', (req, res) => {
 
     const cartProduct = cart.products.find(p => p.product === pid);
     if (cartProduct) {
-       
         cartProduct.quantity += quantity;
     } else {
-       
         cart.products.push({ product: pid, quantity });
     }
 
@@ -167,7 +153,6 @@ app.post('/api/carts/:cid/product/:pid', (req, res) => {
 
     res.status(200).json(cart.products); 
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
