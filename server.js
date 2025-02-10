@@ -1,159 +1,59 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-
+const { engine } = require('express-handlebars');
+const http = require('http');
+const socketIo = require('socket.io');
+const productRoutes = require('./routes/productRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const { addProduct, deleteProduct, getAllProducts } = require('./managers/productManager');  // Desestructuración de las funciones necesarias
 const app = express();
+const server = http.createServer(app);  
+const io = socketIo(server);  
 
 const PORT = 8080;
 
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+app.set('views', './src/views');
 
-app.use(express.json());  
+app.use(express.json());
+app.use('/api/products', productRoutes);
+app.use('/api/carts', cartRoutes);
 
-const productsFile = path.join(__dirname, 'products.json');
-const cartsFile = path.join(__dirname, 'cart.json');
+app.use(express.static('public'));
 
-function readProducts() {
-    if (!fs.existsSync(productsFile)) {
-        return [];
-    }
-    const data = fs.readFileSync(productsFile, 'utf-8');
-    return JSON.parse(data);
-}
+io.on('connection', (socket) => {
+    console.log('A user connected');
 
-function writeProducts(products) {
-    fs.writeFileSync(productsFile, JSON.stringify(products, null, 2));
-}
+    // Enviar la lista inicial de productos a todos los clientes conectados
+    socket.emit('productList', getAllProducts(10));
 
-function readCarts() {
-    if (!fs.existsSync(cartsFile)) {
-        return [];
-    }
-    const data = fs.readFileSync(cartsFile, 'utf-8');
-    return JSON.parse(data);
-}
+    // Escuchar el evento para agregar un producto
+    socket.on('addProduct', (newProduct) => {
+        const addedProduct = addProduct(newProduct);  // Agregar producto
+        io.emit('productList', getAllProducts(10));  // Emitir la lista actualizada a todos los clientes
+    });
 
-function writeCarts(carts) {
-    fs.writeFileSync(cartsFile, JSON.stringify(carts, null, 2));
-}
+    // Escuchar el evento para eliminar un producto
+    socket.on('deleteProduct', (pid) => {
+        deleteProduct(pid);  // Eliminar producto
+        io.emit('productList', getAllProducts(10));  // Emitir la lista actualizada a todos los clientes
+    });
 
-app.get('/api/products', (req, res) => {
-    const products = readProducts();
-    const limit = parseInt(req.query.limit) || products.length;
-    res.json(products.slice(0, limit)); 
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
 });
 
-app.get('/api/products/:pid', (req, res) => {
-    const { pid } = req.params;
-    const products = readProducts();
-    const product = products.find(p => p.id === pid);
-    if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-    res.json(product);
+app.get('/', (req, res) => {
+    const products = getAllProducts(10); 
+    res.render('home', { products });
 });
 
-app.post('/api/products', (req, res) => {
-    const { title, description, code, price, status = true, stock, category, thumbnails = [] } = req.body;
-    const products = readProducts();
-   
-    const id = Date.now().toString();
-
-    const newProduct = { id, title, description, code, price, status, stock, category, thumbnails };
-    products.push(newProduct);
-
-    writeProducts(products);
-
-    res.status(201).json(newProduct);
+app.get('/realtimeproducts', (req, res) => {
+    const products = getAllProducts(10); 
+    res.render('realTimeProducts', { products });
 });
 
-app.put('/api/products/:pid', (req, res) => {
-    const { pid } = req.params;
-    const { title, description, code, price, status, stock, category, thumbnails } = req.body;
-    const products = readProducts();
-
-    const product = products.find(p => p.id === pid);
-    if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-
-    if (title) product.title = title;
-    if (description) product.description = description;
-    if (code) product.code = code;
-    if (price) product.price = price;
-    if (status !== undefined) product.status = status;
-    if (stock) product.stock = stock;
-    if (category) product.category = category;
-    if (thumbnails) product.thumbnails = thumbnails;
-
-    writeProducts(products);
-
-    res.json(product);
-});
-
-app.delete('/api/products/:pid', (req, res) => {
-    const { pid } = req.params;
-    const products = readProducts();
-    const productIndex = products.findIndex(p => p.id === pid);
-    if (productIndex === -1) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-
-    products.splice(productIndex, 1);
-
-    writeProducts(products);
-
-    res.status(204).end();
-});
-
-app.post('/api/carts', (req, res) => {
-    const carts = readCarts();
-    const id = Date.now().toString();  
-    const newCart = { id, products: [] };
-    carts.push(newCart);
-
-    writeCarts(carts);
-
-    res.status(201).json(newCart);
-});
-
-app.get('/api/carts/:cid', (req, res) => {
-    const { cid } = req.params;
-    const carts = readCarts();
-    const cart = carts.find(c => c.id === cid);
-    if (!cart) {
-        return res.status(404).json({ error: 'Cart not found' });
-    }
-    res.json(cart.products);  
-});
-
-app.post('/api/carts/:cid/product/:pid', (req, res) => {
-    const { cid, pid } = req.params;
-    const { quantity = 1 } = req.body;  
-
-    const carts = readCarts();
-    const cart = carts.find(c => c.id === cid);
-    if (!cart) {
-        return res.status(404).json({ error: 'Cart not found' });
-    }
-
-    const products = readProducts();
-    const product = products.find(p => p.id === pid);
-    if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-
-    const cartProduct = cart.products.find(p => p.product === pid);
-    if (cartProduct) {
-        cartProduct.quantity += quantity;
-    } else {
-        cart.products.push({ product: pid, quantity });
-    }
-
-    writeCarts(carts);
-
-    res.status(200).json(cart.products); 
-});
-
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
