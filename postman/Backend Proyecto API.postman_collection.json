@@ -1,0 +1,106 @@
+{
+	"info": {
+		"_postman_id": "9edcb727-f632-4958-8ee9-75c9e5eea887",
+		"name": "Backend Proyecto API",
+		"description": "StartFragment\n\n**Product and Cart API - Real-time Updates with WebSockets**\n\nThis API provides endpoints for managing products and carts, along with real-time product updates via WebSockets.\n\n### Available Routes:\n\n- **`/api/products`**:\n    \n    - `GET`: Fetch the list of products (returns the first 10 products).\n        \n    - `POST`: Add a new product.\n        \n    - `DELETE`: Remove a product by its ID.\n        \n- **`/api/carts`**:\n    \n    - `GET`: Fetch all carts (customize further based on cart management functionality).\n        \n\n### Real-time Features (WebSockets):\n\n- **Product List Updates**: The product list is broadcast to all connected clients whenever a product is added or removed.\n    \n- **`addProduct`** **Event**: Add a new product via WebSocket.\n    \n- **`deleteProduct`** **Event**: Remove a product via WebSocket.\n    \n\nThis API is designed to provide a seamless experience with real-time synchronization of product data across all connected clients. Ideal for applications that require live updates of product inventory.\n\nEndFragment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42443437"
+	},
+	"item": [
+		{
+			"name": "routes",
+			"item": [
+				{
+					"name": "products",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "?GET=http://localhost:8080/api/products",
+									"query": [
+										{
+											"key": "GET",
+											"value": "http://localhost:8080/api/products",
+											"description": "This request fetches all the products from the API. It will return the first 10 products from the products.json file.\n"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New Request",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "?DELETE=http://localhost:8080/api/products/1",
+									"query": [
+										{
+											"key": "DELETE",
+											"value": "http://localhost:8080/api/products/1",
+											"description": "This request deletes a product by its ID. The ID should be specified in the URL path.\n"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New Request",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"New Product\",\r\n  \"price\": 200,\r\n  \"description\": \"This is a new product\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "?POST=http://localhost:8080/api/products",
+									"query": [
+										{
+											"key": "POST",
+											"value": "http://localhost:8080/api/products",
+											"description": "This request adds a new product to the API. The product details (name, price, description) should be provided in the request body.\n"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "cart",
+					"item": [
+						{
+							"name": "New Request",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "?GET=http://localhost:8080/api/carts\n",
+									"query": [
+										{
+											"key": "GET",
+											"value": "http://localhost:8080/api/carts\n"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
