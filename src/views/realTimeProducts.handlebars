@@ -25,10 +25,8 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        
         const socket = io();
 
-       
         socket.on('productList', (products) => {
             const productList = document.getElementById('productList');
             productList.innerHTML = ''; 
@@ -41,7 +39,6 @@
             });
         });
 
-       
         document.getElementById('productForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const title = document.getElementById('title').value;
@@ -52,7 +49,6 @@
             document.getElementById('price').value = '';
         });
 
-        
         function deleteProduct(pid) {
             socket.emit('deleteProduct', pid);  
         }

@@ -1,50 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { getAllProducts, getProductById, addProduct, updateProduct, deleteProduct } = require('../managers/productManager');
+const { getAllProduct, getAllProducts, getProductById, addProduct, updateProduct, deleteProduct } = require('../managers/productManager');
+const { getAllProductsController } = require('../controllers/productController');
+
+const express = require('express');
+const router = express.Router();
 
 
-router.get('/', (req, res) => {
-    const limit = parseInt(req.query.limit) || 10;
-    const products = getAllProducts(limit);
-    res.json(products);
-});
+const { getAllProductsController, getProductById, addProduct, updateProduct, deleteProduct } = require('../controllers/productController');
 
 
-router.get('/:pid', (req, res) => {
-    const { pid } = req.params;
-    const product = getProductById(pid);
-    if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-    res.json(product);
-});
+router.get('/', getAllProductsController);
+
+router.get('/:pid', getProductById);
 
 
-router.post('/', (req, res) => {
-    const product = req.body;
-    const newProduct = addProduct(product);
-    res.status(201).json(newProduct);
-});
+router.post('/', addProduct);
 
 
-router.put('/:pid', (req, res) => {
-    const { pid } = req.params;
-    const updates = req.body;
-    const updatedProduct = updateProduct(pid, updates);
-    if (!updatedProduct) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-    res.json(updatedProduct);
-});
+router.put('/:pid', updateProduct);
 
 
-router.delete('/:pid', (req, res) => {
-    const { pid } = req.params;
-    const success = deleteProduct(pid);
-    if (!success) {
-        return res.status(404).json({ error: 'Product not found' });
-    }
-    res.status(204).end();
-});
+router.delete('/:pid', deleteProduct);
+
 
 module.exports = router;
